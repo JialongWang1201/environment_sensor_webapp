@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sensor Data Monitor</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+  body {
+  background-color: #f8f9fa;
+}
+
+/* Navbar style */
+.navbar {
+  background-color: #343a40;
+  color: white;
+}
+
+/* Card styles */
+.card {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Chart canvas size */
+canvas {
+  max-width: 100%;
+}
+
+/* Map container style */
+#device1Map,
+#device2Map {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  height: 300px;
+  margin-top: 10px;
+}
+
+/* Update button style */
+.update-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.update-button:hover {
+  background-color: #0056b3;
+}
+
+/* Text alignment */
+.text-center {
+  text-align: center;
+}
+
+/* Custom link color */
+a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+      <a class="navbar-brand" href="#">Sensor Data Monitor</a>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <ul class="nav nav-tabs" id="sensorsTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="device1-tab" data-bs-toggle="tab" data-bs-target="#device1" type="button" role="tab" aria-controls="device1" aria-selected="true">Device 1</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="device2-tab" data-bs-toggle="tab" data-bs-target="#device2" type="button" role="tab" aria-controls="device2" aria-selected="false">Device 2</button>
+      </li>
+      <!-- Add more tabs for additional devices -->
+    </ul>
+
+    <div class="tab-content" id="sensorsTabContent">
+      <div class="tab-pane fade show active" id="device1" role="tabpanel" aria-labelledby="device1-tab">
+        <div class="container mt-4">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Device 1: Temperature & Humidity</h5>
+                  <canvas id="device1TemperatureHumidityChart" width="400" height="200"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Device 1: eCO2 & TVOC</h5>
+                  <canvas id="device1Eco2TvocChart" width="400" height="200"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-4">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Device 1: PM2.5</h5>
+                  <canvas id="device1Pm25Chart" width="400" height="200"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Device 1: GPS Location</h5>
+                  <p class="card-text">Latitude: <span id="device1LatitudeValue">Loading...</span></p>
+                  <p class="card-text">Longitude: <span id="device1LongitudeValue">Loading...</span></p>
+                  <div id="device1Map" style="width: 100%; height: 300px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="device2" role="tabpanel" aria-labelledby="device2-tab">
+        <div class="container mt-4">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Device 2: Temperature & Humidity</h5>
+                  <canvas id="device2TemperatureHumidityChart" width="400" height="200"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Device 2: eCO2 & TVOC</h5>
+                  <canvas id="device2Eco2TvocChart" width="400" height="200"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row mt-4">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Device 2: PM2.5</h5>
+                  <canvas id="device2Pm25Chart" width="400" height="200"></canvas>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">Device 2: GPS Location</h5>
+                  <p class="card-text">Latitude: <span id="device2LatitudeValue">Loading...</span></p>
+                  <p class="card-text">Longitude: <span id="device2LongitudeValue">Loading...</span></p>
+                  <div id="device2Map" style="width: 100%; height: 300px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Add more tab panes for additional devices -->
+    </div>
+  </div>
+
+  <script>
+    var device1TempHumidityCtx = document.getElementById('device1TemperatureHumidityChart').getContext('2d');
+    var device1TempHumidityChart = new Chart(device1TempHumidityCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'Temperature (°C)',
+            borderColor: 'red',
+            data: [],
+          },
+          {
+            label: 'Humidity (%)',
+            borderColor: 'blue',
+            data: [],
+          },
+        ],
+      },
+    });
+
+    var device1Eco2TvocCtx = document.getElementById('device1Eco2TvocChart').getContext('2d');
+    var device1Eco2TvocChart = new Chart(device1Eco2TvocCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'eCO2 (ppm)',
+            borderColor: 'green',
+            data: [],
+          },
+          {
+            label: 'TVOC (ppb)',
+            borderColor: 'purple',
+            data: [],
+          },
+        ],
+      },
+    });
+
+    var device1Pm25Ctx = document.getElementById('device1Pm25Chart').getContext('2d');
+    var device1Pm25Chart = new Chart(device1Pm25Ctx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'PM2.5 (µg/m³)',
+            backgroundColor: 'orange',
+            data: [],
+          },
+        ],
+      },
+    });
+
+    var device1Map = L.map('device1Map').setView([0, 0], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(device1Map);
+    var device1GPSMarker = L.marker([0, 0]).addTo(device1Map);
+
+    function updateDevice1Charts(data) {
+      device1TempHumidityChart.data.labels.push(data.timestamp);
+      device1TempHumidityChart.data.datasets[0].data.push(data.temperature);
+      device1TempHumidityChart.data.datasets[1].data.push(data.humidity);
+      device1TempHumidityChart.update();
+
+      device1Eco2TvocChart.data.labels.push(data.timestamp);
+      device1Eco2TvocChart.data.datasets[0].data.push(data.eco2);
+      device1Eco2TvocChart.data.datasets[1].data.push(data.tvoc);
+      device1Eco2TvocChart.update();
+
+      device1Pm25Chart.data.labels.push(data.timestamp);
+      device1Pm25Chart.data.datasets[0].data.push(data.pm25);
+      device1Pm25Chart.update();
+
+      // Update other charts for Device 1 here
+    }
+
+    function updateDevice1GPSMarker(lat, lon) {
+      device1GPSMarker.setLatLng([lat, lon]).update();
+    }
+
+    function fetchDataAndUpdateDevice1() {
+      $.get("/api/get-device1-sensor-data", function(data) {
+        const device1SensorData = JSON.parse(data);
+        updateDevice1Charts(device1SensorData);
+        updateDevice1GPSMarker(device1SensorData.gpsLatitude, device1SensorData.gpsLongitude);
+        $("#device1LatitudeValue").text(device1SensorData.gpsLatitude);
+        $("#device1LongitudeValue").text(device1SensorData.gpsLongitude);
+      });
+    }
+
+    // ... 配置和更新设备1的其他图表 ...
+
+    var device2TempHumidityCtx = document.getElementById('device2TemperatureHumidityChart').getContext('2d');
+    var device2TempHumidityChart = new Chart(device2TempHumidityCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'Temperature (°C)',
+            borderColor: 'red',
+            data: [],
+          },
+          {
+            label: 'Humidity (%)',
+            borderColor: 'blue',
+            data: [],
+          },
+        ],
+      },
+    });
+
+    var device2Eco2TvocCtx = document.getElementById('device2Eco2TvocChart').getContext('2d');
+    var device2Eco2TvocChart = new Chart(device2Eco2TvocCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'eCO2 (ppm)',
+            borderColor: 'green',
+            data: [],
+          },
+          {
+            label: 'TVOC (ppb)',
+            borderColor: 'purple',
+            data: [],
+          },
+        ],
+      },
+    });
+
+    var device2Pm25Ctx = document.getElementById('device2Pm25Chart').getContext('2d');
+    var device2Pm25Chart = new Chart(device2Pm25Ctx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'PM2.5 (µg/m³)',
+            backgroundColor: 'orange',
+            data: [],
+          },
+        ],
+      },
+    });
+
+    var device2Map = L.map('device2Map').setView([0, 0], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(device2Map);
+    var device2GPSMarker = L.marker([0, 0]).addTo(device2Map);
+
+    function updateDevice2Charts(data) {
+      device2TempHumidityChart.data.labels.push(data.timestamp);
+      device2TempHumidityChart.data.datasets[0].data.push(data.temperature);
+      device2TempHumidityChart.data.datasets[1].data.push(data.humidity);
+      device2TempHumidityChart.update();
+
+      device2Eco2TvocChart.data.labels.push(data.timestamp);
+      device2Eco2TvocChart.data.datasets[0].data.push(data.eco2);
+      device2Eco2TvocChart.data.datasets[1].data.push(data.tvoc);
+      device2Eco2TvocChart.update();
+
+      device2Pm25Chart.data.labels.push(data.timestamp);
+      device2Pm25Chart.data.datasets[0].data.push(data.pm25);
+      device2Pm25Chart.update();
+
+      // Update other charts for Device 2 here
+    }
+
+    function updateDevice2GPSMarker(lat, lon) {
+      device2GPSMarker.setLatLng([lat, lon]).update();
+    }
+
+    function fetchDataAndUpdateDevice2() {
+      $.get("/api/get-device2-sensor-data", function(data) {
+        const device2SensorData = JSON.parse(data);
+        updateDevice2Charts(device2SensorData);
+        updateDevice2GPSMarker(device2SensorData.gpsLatitude, device2SensorData.gpsLongitude);
+        $("#device2LatitudeValue").text(device2SensorData.gpsLatitude);
+        $("#device2LongitudeValue").text(device2SensorData.gpsLongitude);
+      });
+    }
+
+    // ... 配置和更新设备2的其他图表 ...
+
+    $(function() {
+      $('#sensorsTab a').on('shown.bs.tab', function (e) {
+        const targetDevice = $(e.target).attr('aria-controls');
+        if (targetDevice === 'device1') {
+          fetchDataAndUpdateDevice1();
+        } else if (targetDevice === 'device2') {
+          fetchDataAndUpdateDevice2();
+        }
+        // Add more conditions for additional devices
+      });
+
+      fetchDataAndUpdateDevice1();
+      fetchDataAndUpdateDevice2();
+
+      setInterval(fetchDataAndUpdateDevice1, 5000);
+      setInterval(fetchDataAndUpdateDevice2, 5000);
+      // Add more intervals for additional devices
+    });
+  </script>
+</body>
+</html>
