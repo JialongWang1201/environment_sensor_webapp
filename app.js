@@ -20,7 +20,7 @@ var port = new SerialPort("/dev/tty.wchusbserialfa1410", {
 port.pipe(parser);
 
 var app = http.createServer(function (req, res) {
-  res.writeHead(200, {"Content-Type": "text/html"});
+  res.writeHead(200, { "Content-Type": "text/html" });
   res.end(index);
 });
 
@@ -36,3 +36,26 @@ parser.on("data", function (data) {
 });
 
 app.listen(3000);
+
+// 在这里添加前端登录代码
+$(function() {
+  $('#loginForm').submit(function(event) {
+    event.preventDefault();
+    const username = $('#username').val();
+    const password = $('#password').val();
+    const userType = $('#userType').val();
+
+    // 假设此处进行用户认证，验证用户名和密码
+    const isAuthenticated = true; // 替换为实际的认证逻辑
+
+    if (isAuthenticated) {
+      if (userType === 'admin') {
+        window.location.href = 'admin-dashboard.html';
+      } else if (userType === 'user') {
+        window.location.href = 'user-dashboard.html';
+      }
+    } else {
+      alert('Login failed. Please check your credentials.');
+    }
+  });
+});
